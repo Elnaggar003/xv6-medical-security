@@ -30,9 +30,13 @@ struct dinode {
   short type;           // File type
   short major;          // Major device number (T_DEV only)
   short minor;          // Minor device number (T_DEV only)
-  short nlink;          // Number of links to inode in file system
+  short nlink;
   uint size;            // Size of file (bytes)
   uint addrs[NDIRECT+1];   // Data block addresses
+  short uid;            // owner user id
+  short gid;            // owner group id
+  short mode;           // permission bits
+  char pad[58];         // padding to 128 bytes
 };
 
 // Inodes per block.

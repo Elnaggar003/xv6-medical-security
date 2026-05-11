@@ -84,6 +84,14 @@ argstr(int n, char **pp)
 
 extern int sys_chdir(void);
 extern int sys_close(void);
+extern int sys_login(void);
+extern int sys_whoami(void);
+extern int sys_useradd(void);
+extern int sys_userdel(void);
+extern int sys_passwd(void);
+extern int sys_auditread(void);
+extern int sys_chmod(void);
+extern int sys_chown(void);
 extern int sys_dup(void);
 extern int sys_exec(void);
 extern int sys_exit(void);
@@ -126,6 +134,14 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+[SYS_login]   sys_login,
+[SYS_whoami]  sys_whoami,
+[SYS_useradd] sys_useradd,
+[SYS_userdel] sys_userdel,
+[SYS_passwd]  sys_passwd,
+[SYS_auditread] sys_auditread,
+[SYS_chmod]   sys_chmod,
+[SYS_chown]   sys_chown,
 };
 
 void
@@ -137,9 +153,12 @@ syscall(void)
   num = curproc->tf->eax;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     curproc->tf->eax = syscalls[num]();
+    char *note = (curproc->tf->eax == -1) ? "DENIED" : "ok";
+    audit_log(curproc->pid, curproc->uid, num, note);
   } else {
     cprintf("%d %s: unknown sys call %d\n",
             curproc->pid, curproc->name, num);
     curproc->tf->eax = -1;
+    audit_log(curproc->pid, curproc->uid, num, "UNKNOWN");
   }
 }

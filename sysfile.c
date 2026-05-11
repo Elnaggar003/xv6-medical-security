@@ -307,6 +307,15 @@ sys_open(void)
       return -1;
     }
     ilock(ip);
+    // Permission check
+    if(ip->mode != 0 && myproc()->uid != 0){
+      int writing = (omode & O_WRONLY) || (omode & O_RDWR);
+      int owner   = (myproc()->uid == ip->uid);
+      int can_r   = owner ? (ip->mode & 0400) : (ip->mode & 0040);
+      int can_w   = owner ? (ip->mode & 0200) : (ip->mode & 0020);
+      if(writing && !can_w){ iunlockput(ip); end_op(); return -1; }
+      if(!writing && !can_r){ iunlockput(ip); end_op(); return -1; }
+    }
     if(ip->type == T_DIR && omode != O_RDONLY){
       iunlockput(ip);
       end_op();

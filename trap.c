@@ -33,6 +33,25 @@ idtinit(void)
 }
 
 //PAGEBREAK: 41
+static char*
+trapname(int trapno)
+{
+  static char *names[] = {
+    "divide_error", "debug", "nmi", "breakpoint",
+    "overflow", "bound", "invalid_opcode", "device_na",
+    "double_fault", "", "invalid_tss", "seg_not_present",
+    "stack_fault", "gpfault", "pgfault", "", "fpu_error",
+    "align_check", "machine_check", "simd_error"
+  };
+  if(trapno < 20) return names[trapno];
+  if(trapno == T_SYSCALL) return "syscall";
+  if(trapno == T_IRQ0+IRQ_TIMER) return "timer";
+  if(trapno == T_IRQ0+IRQ_IDE)   return "ide";
+  if(trapno == T_IRQ0+IRQ_KBD)   return "kbd";
+  if(trapno == T_IRQ0+IRQ_COM1)  return "serial";
+  return "unknown";
+}
+
 void
 trap(struct trapframe *tf)
 {
@@ -87,10 +106,10 @@ trap(struct trapframe *tf)
       panic("trap");
     }
     // In user space, assume process misbehaved.
-    cprintf("pid %d %s: trap %d err %d on cpu %d "
-            "eip 0x%x addr 0x%x--kill proc\n",
-            myproc()->pid, myproc()->name, tf->trapno,
-            tf->err, cpuid(), tf->eip, rcr2());
+    cprintf("TRAP pid=%d uid=%d trap=%s(%d) eip=0x%x\n",
+            myproc()->pid, myproc()->uid,
+            trapname(tf->trapno), tf->trapno, tf->eip);
+    audit_log(myproc()->pid, myproc()->uid, tf->trapno, "TRAP");
     myproc()->killed = 1;
   }
 

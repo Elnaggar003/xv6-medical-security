@@ -103,6 +103,9 @@ int             pipewrite(struct pipe*, char*, int);
 
 //PAGEBREAK: 16
 // proc.c
+void            authinit(void);
+void            auditinit(void);
+void            audit_log(int,int,int,char*);
 int             cpuid(void);
 void            exit(void);
 int             fork(void);
